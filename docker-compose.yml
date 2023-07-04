@@ -1,0 +1,61 @@
+version: "3.2"
+
+services:
+  frontend:
+    build:
+      context: frontend
+      args:
+        USER_ID: ${USER_ID:-0}
+        GROUP_ID: ${GROUP_ID:-0}
+    depends_on:
+      - pgsql
+    ports:
+      - 20080:80
+    volumes:
+      # Re-use local composer cache via host-volume
+      - ~/.composer-docker/cache:/root/.composer/cache:delegated
+      # Mount source-code for development
+      - ./:/var/www/app
+
+  backend:
+    build: backend
+    ports:
+      - 21080:80
+    volumes:
+      # Re-use local composer cache via host-volume
+      - ~/.composer-docker/cache:/root/.composer/cache:delegated
+      # Mount source-code for development
+      - ./:/app
+
+  # mysql:
+  #   image: mysql:5.7
+  #   environment:
+  #     - MYSQL_ROOT_PASSWORD=verysecret
+  #     - MYSQL_DATABASE=yii2advanced
+  #     - MYSQL_USER=yii2advanced
+  #     - MYSQL_PASSWORD=secret
+
+  pgsql:
+    image: postgres:12
+    ports:
+      - 5432:5432
+    volumes:
+      - db-data:/var/lib/postgresql/data
+    environment:
+      - POSTGRES_DB=dream_rent
+      - POSTGRES_USER=dream_rent
+      - POSTGRES_PASSWORD=12345678
+
+  adminer:
+    image: adminer
+    depends_on:
+      - pgsql
+    ports:
+      - 8000:8080
+    environment:
+      - ADMINER_DESIGN=lucas-sandery
+      - ADMINER_DEFAULT_SERVER=pgsql
+
+volumes:
+  db-data:
+    driver: local
